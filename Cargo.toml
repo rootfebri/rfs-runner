@@ -1,0 +1,36 @@
+[package]
+name = "rfs-runner"
+version = "0.1.0"
+edition = "2024"
+description = "A simple UI Progress"
+license = "MIT" # Replace with your actual license
+repository = "https://github.com/rootfebri/rfs-runner" # Replace with your repository URL
+authors = ["Febri <root.febri@gmail.com>"] # Replace with your name and email
+keywords = ["progress", "ui", "indicatif"]
+categories = ["command-line-utilities"]
+
+[dependencies.tokio]
+version = "1.45.0"
+default-features = false
+features = ["signal", "macros", "sync", "time", "rt"]
+
+[dependencies.indicatif]
+version = "0.17.11"
+default-features = false
+features = ["tokio"]
+
+[dependencies.thiserror]
+version = "2.0.12"
+
+[dependencies.colored]
+version = "3.0.0"
+
+[dependencies.chrono]
+version = "0.4.41"
+features = ["now"]
+
+[dependencies.futures-util]
+version = "0.3.31"
+optional = true
+default-features = false
+features = ["std", "alloc"]
