@@ -3,9 +3,9 @@ name = "rfs-runner"
 version = "0.1.1"
 edition = "2024"
 description = "A simple UI Progress"
-license = "MIT" # Replace with your actual license
-repository = "https://github.com/rootfebri/rfs-runner" # Replace with your repository URL
-authors = ["Febri <root.febri@gmail.com>"] # Replace with your name and email
+license = "MIT"
+repository = "https://github.com/rootfebri/rfs-runner"
+authors = ["Febri <root.febri@gmail.com>"]
 keywords = ["progress", "ui", "indicatif"]
 categories = ["command-line-utilities"]
 
