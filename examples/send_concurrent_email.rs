@@ -9,7 +9,6 @@ use rfs_runner::{DefaultTemplate, MainProgress, WorkerPool, WorkerTemplate};
 use tokio::io::{AsyncBufReadExt, AsyncSeekExt};
 const MAX_WORKER: u32 = 8;
 
-#[cfg(feature = "futures-util")]
 #[tokio::main]
 async fn main() -> Result<()> {
   use std::env::temp_dir;
