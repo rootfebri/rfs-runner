@@ -190,7 +190,7 @@ impl<D: Send + 'static, S: WorkerTemplate> WorkerPool<D, S> {
   }
 
   /// Stops all workers in the pool and waits for them to finish.
-  pub async fn stop_all_workers(&mut self) {
+  async fn stop_all_workers(&mut self) {
     self.close_all();
 
     loop {
@@ -207,8 +207,8 @@ impl<D: Send + 'static, S: WorkerTemplate> WorkerPool<D, S> {
   }
 
   /// Closes all channels in the pool.
-  pub fn close_all(&mut self) {
-    while self.channels.pop_front().is_some() {
+  fn close_all(&mut self) {
+    while self.channels.pop_back().is_some() {
       // Empty
     }
   }
@@ -283,7 +283,7 @@ impl<D: Send + 'static, S: WorkerTemplate> WorkerPool<D, S> {
 
   /// Waits for all workers to complete their tasks.
   pub async fn join_all(mut self) {
-    self.close_all();
+    self.stop_all_workers().await;
 
     #[cfg(feature = "futures-util")]
     join_all(self.handles.into_values()).await;
