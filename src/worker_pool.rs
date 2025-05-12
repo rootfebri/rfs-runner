@@ -101,7 +101,7 @@ use crate::{limit_string, MainProgress, Result, Uid, WorkerTemplate};
 type Handle = JoinHandle<()>;
 type Handles = HashMap<Uid, Handle>;
 
-/// `WorkerPool` manages a pool of worker threads for parallel task execution.
+/// [`WorkerPool`] manages a pool of worker threads for parallel task execution.
 ///
 /// It allows spawning workers, sending data to them, and managing their lifecycle.
 pub struct WorkerPool<D, S>
@@ -112,7 +112,7 @@ where
   channels: VecDeque<(Uid, Sender<D>)>,
   handles: Handles,
   main_progress: MainProgress<S>,
-  _unsafe_sync: PhantomData<UnsafeCell<u8>>,
+  _unsafe_sync: PhantomData<UnsafeCell<()>>,
 }
 
 impl<D: Send + 'static, S: WorkerTemplate> WorkerPool<D, S> {
@@ -213,24 +213,29 @@ impl<D: Send + 'static, S: WorkerTemplate> WorkerPool<D, S> {
     }
   }
 
-  /// Sends data to a worker in a sequential consistent manner.
+  /// Sends data to the first available worker in the pool.
   ///
   /// # Arguments
   ///
-  /// * `data` - The data to send to the worker.
+  /// * `data`: The data to send to the worker.
+  ///
+  /// Returns: `Result<(), D>`
+  ///
   pub async fn send_seqcst(&mut self, mut data: D) -> Result<(), D> {
     let timeout_1ms = Duration::from_millis(1);
 
     'sending: while !self.channels.is_empty() {
       // Manages closed channel
       self.channels.retain(|(_, tx)| !tx.is_closed());
-      let Some(channel) = self.channels.pop_front() else { continue };
 
-      match channel.1.send_timeout(data, timeout_1ms).await {
+      let Some(channel) = self.channels.pop_front() else { continue };
+      let sent = channel.1.send_timeout(data, timeout_1ms).await;
+      self.channels.push_back(channel);
+
+      match sent {
         Ok(_) => return Ok(()),
         Err(error) => {
           data = error.into_inner();
-          self.channels.push_back(channel);
           continue 'sending;
         }
       }
@@ -239,41 +244,34 @@ impl<D: Send + 'static, S: WorkerTemplate> WorkerPool<D, S> {
     Err(data)
   }
 
-  /// Sends data to a specific worker by its ID.
+  /// Sends data directly to the worker by its id.
   ///
   /// # Arguments
   ///
   /// * `id` - The ID of the worker to send data to.
   /// * `data` - The data to send.
   ///
-  /// # Return
-  ///
-  /// * [`Ok(())`] - Unit if the data sent successfully to worker jobs.
-  /// * [`Err(data)`] - The data to send.
+  /// returns: Result<(), D>
   ///
   /// # Panics
-  /// Panic if there is no worker ever spawned
+  ///
+  /// Panics if the pool naver been spawned a worker.
   pub async fn send_to(&mut self, id: Uid, data: D) -> Result<(), D> {
     if self.handles.is_empty() {
-      panic!("No worker have ever been spawned!");
+      panic!("No worker has ever been spawned!");
     }
 
     self.channels.retain(|(_, tx)| !tx.is_closed());
-    let mut temp_ch = VecDeque::new();
 
-    while let Some((worker_id, channel)) = self.channels.pop_front() {
-      if worker_id == id {
-        if let Err(err) = channel.send(data).await {
+    for (worker_id, tx) in &self.channels {
+      if worker_id == &id {
+        if let Err(err) = tx.send(data).await {
           _ = self.ui.println(err.to_string().bright_red().to_string());
           return Err(err.0);
         }
         return Ok(());
       }
-
-      temp_ch.push_back((worker_id, channel));
     }
-
-    temp_ch.into_iter().for_each(|x| self.channels.push_back(x));
 
     Err(data)
   }
