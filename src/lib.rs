@@ -1,6 +1,6 @@
 pub use prelude::*;
 
-mod error;
+pub mod error;
 mod helper;
 mod prelude;
 mod templates;

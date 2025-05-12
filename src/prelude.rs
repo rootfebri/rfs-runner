@@ -1,6 +1,5 @@
 use std::num::NonZeroU32;
 
-pub(crate) use super::error::Error;
 pub use super::helper::limit_string;
 pub(crate) use super::helper::*;
 pub use super::templates::*;
@@ -10,4 +9,4 @@ pub use super::worker_progress::MainProgress;
 pub use super::worker_state::{WorkerState, WorkerStatus};
 
 pub type Uid = NonZeroU32;
-pub type Result<T, E = Error> = std::result::Result<T, E>;
+pub type Result<T, E = crate::error::Error> = std::result::Result<T, E>;
