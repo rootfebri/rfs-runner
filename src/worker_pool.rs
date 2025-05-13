@@ -20,6 +20,7 @@
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
 //!   use std::env::temp_dir;
+//!
 //!   let smtp_credentials = Credentials::new("example@gmail.com".to_owned(), "KeepSecretPasswordFromCommit".to_owned());
 //!   let pool_config = PoolConfig::new().max_size(MAX_WORKER);
 //!   let smtp_server: Arc<AsyncSmtpTransport<Tokio1Executor>> = Arc::new(
@@ -161,7 +162,7 @@ impl<D: Send + 'static, S: WorkerTemplate> WorkerPool<D, S> {
       .fn_ptr(f)
       .main_ui(self.main_ui())
       .receiver(rx)
-      .build()
+      .build(task_id)
     {
       Ok(handle) => handle,
       Err(build_error) => {

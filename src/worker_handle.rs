@@ -138,11 +138,11 @@ where
     self
   }
 
-  pub fn build(self) -> Result<WorkerHandle<D, F, Fut, S>> {
+  pub fn build(self, uid: Uid) -> Result<WorkerHandle<D, F, Fut, S>> {
     let fn_ptr = self.fn_ptr.ok_or(Error::Missing("[`WorkerHandleBuilder`] missing [`FnMut`]"))?;
     let receiver = self.receiver.ok_or(Error::Missing("[`WorkerHandleBuilder`] missing [`Receiver<T>`]"))?;
     let main_ui = self.main_ui.ok_or(Error::Missing("[`WorkerHandleBuilder`] missing [`MainProgress`]"))?;
-    let worker_state = WorkerState::new(Uid::new(1).unwrap(), main_ui.clone());
+    let worker_state = WorkerState::new(uid, main_ui.clone());
 
     let handle = WorkerHandle {
       fn_ptr,
@@ -157,6 +157,7 @@ where
 
 #[cfg(test)]
 mod test {
+  use std::num::NonZero;
   use std::sync::atomic::AtomicBool;
   use std::sync::Arc;
 
@@ -176,7 +177,7 @@ mod test {
       .fn_ptr(async |_: String, _: MainProgress<DefaultTemplate>| Ok(()))
       .main_ui(main_ui)
       .receiver(rx)
-      .build();
+      .build(NonZero::new(1).unwrap());
 
     assert!(handle.is_ok());
 
@@ -201,7 +202,7 @@ mod test {
       .fn_ptr(move |msg: String, ui: MainProgress<DefaultTemplate>| the_solver_fn(msg, ui, ref_4_fn_ptr_owned.clone()))
       .main_ui(main_ui)
       .receiver(rx)
-      .build();
+      .build(NonZero::new(1).unwrap());
 
     assert!(handle.is_ok());
 
