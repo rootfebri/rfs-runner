@@ -2,15 +2,14 @@ use std::fmt;
 
 use colored::Colorize;
 
-pub fn limit_string(max: usize, input: impl ToString, pad_str: impl Into<Option<&'static str>>) -> String {
+pub fn limit_string(max: usize, input: impl ToString, pad: impl Into<Option<char>>) -> String {
   let input = input.to_string();
+  let pad = pad.into().unwrap_or(' ');
 
-  let mut input = input.to_string();
-  if input.len() < max {
-    input.push_str(&pad_str.into().unwrap_or(" ").repeat(max - input.len()));
-  }
-  input.truncate(max);
-  input
+  let truncated: String = input.chars().take(max).collect();
+  let pad_len = max.saturating_sub(truncated.chars().count());
+
+  truncated + &pad.to_string().repeat(pad_len)
 }
 
 pub fn line_err(error: impl ToString) -> String {
